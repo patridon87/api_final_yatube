@@ -1,8 +1,8 @@
-from rest_framework import filters, generics, permissions, viewsets
+from rest_framework import filters, generics, permissions, viewsets, mixins
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 
-from posts.models import Comment, Follow, Group, Post, User
+from posts.models import Comment, Follow, Group, Post
 
 from .permissions import AuthorOrReadOnly
 from .serializers import (
@@ -43,26 +43,18 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, post=post)
 
 
-class FollowViewSet(viewsets.ModelViewSet):
+class FollowViewSet(
+    mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
+):
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ("following__username",)
 
     def get_queryset(self):
-        new_queryset = Follow.objects.filter(user=self.request.user)
-        return new_queryset
+        return self.request.user.follower.all()
 
     def perform_create(self, serializer):
         if "following" not in self.request.data:
             raise ValidationError("Отсутсвуют данные для подписки")
-        following = generics.get_object_or_404(
-            User, username=self.request.data["following"]
-        )
-        if self.request.user.username == self.request.data["following"]:
-            raise ValidationError("Нельзя подписаться на себя")
-        if Follow.objects.filter(
-                user=self.request.user, following=following).exists():
-            raise ValidationError("Подписка уже оформлена")
-
-        serializer.save(user=self.request.user, following=following)
+        serializer.save(user=self.request.user)
