@@ -1,8 +1,7 @@
 from rest_framework import filters, generics, permissions, viewsets, mixins
-from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 
-from posts.models import Comment, Follow, Group, Post
+from posts.models import Comment, Group, Post
 
 from .permissions import AuthorOrReadOnly
 from .serializers import (
@@ -46,7 +45,6 @@ class CommentViewSet(viewsets.ModelViewSet):
 class FollowViewSet(
     mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
 ):
-    queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ("following__username",)
@@ -55,6 +53,4 @@ class FollowViewSet(
         return self.request.user.follower.all()
 
     def perform_create(self, serializer):
-        if "following" not in self.request.data:
-            raise ValidationError("Отсутсвуют данные для подписки")
         serializer.save(user=self.request.user)
