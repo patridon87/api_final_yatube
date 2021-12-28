@@ -52,3 +52,7 @@ POST /api/v1/posts/ - создание поста
 GET /api/v1/posts/{post_id}/comments - получение списка комментариев к посту
 POST /api/v1/posts/{post_id}/comments - создание комментария к посту
 ```
+
+### Автор
+
+Сергей Карагодин
